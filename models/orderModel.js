@@ -2,34 +2,35 @@ import mongoose from "mongoose";
 import { double, object } from "webidl-conversions";
 
 const orderSchema = new mongoose.Schema({
-    order_created_date: { 
+    orderCreatedDate: { 
         type: Date, // Need to find a standard for what 'Date' means
         required: true 
     },
-    order_status: {
+    orderStatus: {
         type: String,
         enum: ['order_started', 'order_waiting', 'order_completed'], // Need to discuss this (sega pattern)
         required: true
     },
-    order_number: {
+    orderNumber: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
-    total_price: {
+    totalPrice: {
         type: Number,
         required: true
     },
-    order_line_items: [
+    orderLineItems: [
         {
             quantity: {
                 type: Number,
                 required: true
             },
-            product_id: {
+            productId: {
                 type: Number, // Location independance?
                 required: true
             },
-            total_price: {
+            totalPrice: {
                 type: Number,
                 required: true
             },

@@ -1,9 +1,17 @@
 import Order from "../models/orderModel.js";
+import { publishOrderStartedEvent } from "../messages/orders.js";
 import "dotenv/config"
 
 
 async function createOrder(order) {
-    const newOrder = await Order.create(order);
+    let newOrder;
+    try {
+        newOrder = await Order.create(order);
+        await publishOrderStartedEvent(newOrder);
+    }
+    catch(error) {
+        console.log(error);
+    }
     return newOrder;
 }
 
