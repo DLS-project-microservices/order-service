@@ -3,6 +3,7 @@ import express from "express";
 import "dotenv/config"
 import routes from './routes/routes.js';
 import Order from "./models/orderModel.js";
+import { consumePaymentCaptured } from "./messages/orders.js";
 
 await mongoose.connect(process.env.DB_URL);
 
@@ -10,6 +11,8 @@ const app = express();
 
 app.use(express.json());
 app.use('/api/orders', routes);
+
+await consumePaymentCaptured();
 
 /*await Order.create(
     {
