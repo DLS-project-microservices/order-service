@@ -75,7 +75,37 @@ async function publishOrderCompleted(message) {
     }
 }
 
+async function consumeShipmentSent() {
+    try {
+        const connection = await connectToRabbitMQ();
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(exchangeName, 'fanout', {
+            durable: true
+        });
+        await channel.assertQueue(queueName, {
+            durable: true
+        });
+        await channel.bindQueue(queueName, exchangeName, '');
+
+        console.log('Waiting for shipment_sent events...');
+
+        channel.consume(queueName, async (msg) => {
+            if (msg?.content) {
+                const messageContent = JSON.parse(msg.content.toString());
+                console.log(messageContent);
+                console.log('shipment_sent event processed successfully');
+                channel.ack(msg);
+            }
+        });
+
+    } catch (error) {
+        console.error('Error consuming shipment_sent event:', error);
+    }
+};
+
 export {
     consumePaymentCaptured,
     publishOrderStartedEvent,
+    consumeShipmentSent
 }
