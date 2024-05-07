@@ -48,6 +48,28 @@ async function connectToOrderFanoutExchange() {
     }
 }
 
+async function connectToShipmentFanoutExchange() {
+    const exchangeName = 'shipment_fanout';
+
+    if (!orderFanoutExchange || !channel) {
+        try {
+            channel = await connectToRabbitMQ();
+            console.log(`Connecting to RabbitMQ exchange: ${exchangeName}...`)
+            orderFanoutExchange = await channel.assertExchange(exchangeName, 'fanout', {
+                durable: true
+            });
+            console.log(`Established connection to RabbitMQ exchange: ${exchangeName}`)
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
+    return {
+        exchangeName,
+        channel
+    }
+}
+
 async function publishOrderStartedEvent(orderInformation) {
     const { exchangeName, channel} = await connectToOrderDirectExchange();
     try {
@@ -101,12 +123,12 @@ async function publishOrderCompleted(message) {
 async function consumeShipmentSent() {
     const queueName = "order_service_consume_shipment_sent";
     try {
-        const { exchangeName, channel } = await connectToOrderFanoutExchange();
+        const { exchangeName, channel } = await connectToShipmentFanoutExchange();
 
         await channel.assertQueue(queueName, {
         durable: true
         });
-        channel.bindQueue(queueName, exchangeName, 'shipment sent');
+        channel.bindQueue(queueName, exchangeName, '');
 
         console.log('Waiting for shipment_sent events...');
 
