@@ -2,7 +2,7 @@ import express from 'express';
 import { Stripe } from "stripe";
 import { 
     createOrder,
-    findOrderByOrderNumber
+    generateUniqueOrderNumber
      } from '../service/order.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -11,26 +11,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 
 const webhooksRouter = express.Router(); 
-
-
-async function generateUniqueOrderNumber() {
-    let orderNumber;
-    let isUnique = false;
-
-    while (!isUnique) {
-        const randomNum = Math.floor(100000 + Math.random() * 900000);
-
-        orderNumber = `ORDER${randomNum}`;
-
-        const existingOrder = await findOrderByOrderNumber(orderNumber);
-
-        if (!existingOrder) {
-            isUnique = true;
-        }
-    }
-
-    return orderNumber;
-}
 
 
 webhooksRouter.post('/checkout-session-completed-webhook', express.raw({type: 'application/json'}), async  (request, response) => {
@@ -49,8 +29,6 @@ webhooksRouter.post('/checkout-session-completed-webhook', express.raw({type: 'a
     // Handle the event
     switch (event.type) {
       case 'checkout.session.completed':
-        const checkoutSessionCompleted = event.data.object;
-        //console.log(checkoutSessionCompleted);
         const sessionWithLineItems = await stripe.checkout.sessions.retrieve(
             event.data.object.id,
             {
@@ -60,23 +38,14 @@ webhooksRouter.post('/checkout-session-completed-webhook', express.raw({type: 'a
           const line_items = await stripe.checkout.sessions.listLineItems(event.data.object.id, {
             expand: ['data.price.product'],
           });
-          /*
-          console.log(sessionWithLineItems.line_items.data);
-          console.log("-----------------------------------");
-          console.log("-----------------------------------");
-          console.log("-----------------------------------");
-          console.log(sessionWithLineItems);
-          console.log("************************");
-          console.log(line_items.data[0].price);
 
-*/
           const orderLineItems = line_items.data.map(item => {
             const id = parseInt(item.price.product.metadata.product_id, 10);
             return {
                 productId: id,
                 productName: item.price.product.metadata.product_name,
                 quantity: item.quantity,
-                totalPrice: item.amount_total,
+                totalPrice: item.amount_total / 100,
             }
           })
           const currentDate = new Date();
@@ -89,7 +58,7 @@ webhooksRouter.post('/checkout-session-completed-webhook', express.raw({type: 'a
             orderCreatedDate: formattedDate,
             orderStatus: 'order_started',
             orderNumber: orderNumber,
-            totalPrice: sessionWithLineItems.amount_total,
+            totalPrice: sessionWithLineItems.amount_total / 100,
             orderLineItems: orderLineItems,
             customer: {
                 firstName: sessionWithLineItems.metadata.firstName,
