@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { double, object } from "webidl-conversions";
 
 const orderSchema = new mongoose.Schema({
     orderCreatedDate: { 
@@ -22,6 +21,10 @@ const orderSchema = new mongoose.Schema({
     },
     orderLineItems: [
         {
+            productName: {
+                type: String,
+                required: true
+            },
             quantity: {
                 type: Number,
                 required: true

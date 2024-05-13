@@ -20,7 +20,13 @@ async function findAllOrders() {
     return products;
 }
 
+async function findOrderByOrderNumber(orderNumber) {
+    const order = await Order.findOne({ orderNumber: orderNumber });;
+    return order;
+}
+
 export {
     createOrder,
-    findAllOrders
+    findAllOrders,
+    findOrderByOrderNumber
 }
