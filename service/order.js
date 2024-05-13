@@ -20,7 +20,31 @@ async function findAllOrders() {
     return products;
 }
 
+async function findOrderByOrderNumber(orderNumber) {
+    const order = await Order.findOne({ orderNumber: orderNumber });;
+    return order;
+}
+async function generateUniqueOrderNumber() {
+    let orderNumber;
+    let isUnique = false;
+
+    while (!isUnique) {
+        const randomNum = Math.floor(100000 + Math.random() * 900000);
+
+        orderNumber = `ORDER${randomNum}`;
+
+        const existingOrder = await findOrderByOrderNumber(orderNumber);
+
+        if (!existingOrder) {
+            isUnique = true;
+        }
+    }
+
+    return orderNumber;
+}
 export {
     createOrder,
-    findAllOrders
+    findAllOrders,
+    findOrderByOrderNumber,
+    generateUniqueOrderNumber
 }
