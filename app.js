@@ -1,9 +1,18 @@
 import mongoose from "mongoose";
 import express from "express";
+import SmeeClient from 'smee-client';
 import "dotenv/config"
 import routes from './routes/routes.js';
 import webhooksRouter from "./routes/webhooksRoutes.js";
 import { consumePaymentCaptured, consumeShipmentSent } from "./messages/orders.js";
+
+const smee = new SmeeClient({
+    source: process.env.SMEE_SOURCE,
+    target: process.env.SMEE_TARGET,
+    logger: console
+})
+  
+smee.start()
 
 await mongoose.connect(process.env.DB_URL);
 

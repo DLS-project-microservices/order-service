@@ -13,19 +13,19 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 const webhooksRouter = express.Router(); 
 
 
-webhooksRouter.post('/checkout-session-completed-webhook', express.raw({type: 'application/json'}), async  (request, response) => {
-    const sig = request.headers['stripe-signature'];
+webhooksRouter.post('/checkout-session-completed-webhook', express.json(), async  (request, response) => {
   
     let event;
-    const endpointSecret = "whsec_g9EkzlOtTZHpCo3pFEQqv6f8YLfyMEZ7"
-  
+
     try {
-      event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+      event = request.body;
+      //console.log('the event is: ',event)
     } catch (err) {
+      console.log(err)
       response.status(400).send(`Webhook Error: ${err.message}`);
       return;
     }
-  
+  console.log('the event is: ',event)
     // Handle the event
     switch (event.type) {
       case 'checkout.session.completed':
@@ -69,7 +69,7 @@ webhooksRouter.post('/checkout-session-completed-webhook', express.raw({type: 'a
                 postalCode: sessionWithLineItems.metadata.postalCode,
             }
           }
-          
+          console.log('the new order is: ',newOrder)
           await createOrder(newOrder);
         break;
  
