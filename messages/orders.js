@@ -1,15 +1,15 @@
-import connectToRabbitMQ from "./connection.js";
+import { connectToRabbitMQ } from "amqplib-retry-wrapper-dls";
 
 let orderDirectExchange;
 let orderFanoutExchange;
-let channel;
+
+const channel = await connectToRabbitMQ(process.env.AMQP_HOST);
 
 async function connectToOrderDirectExchange() {
     const exchangeName = 'order_direct';
 
     if (!orderDirectExchange || !channel) {
         try {
-            channel = await connectToRabbitMQ();
             console.log(`Conneting to RabbitMQ exchange: ${exchangeName}...`)
             orderDirectExchange = await channel.assertExchange(exchangeName, 'direct', {
                 durable: true
@@ -31,7 +31,6 @@ async function connectToOrderFanoutExchange() {
 
     if (!orderFanoutExchange || !channel) {
         try {
-            channel = await connectToRabbitMQ();
             console.log(`Connecting to RabbitMQ exchange: ${exchangeName}...`)
             orderFanoutExchange = await channel.assertExchange(exchangeName, 'fanout', {
                 durable: true
@@ -53,7 +52,6 @@ async function connectToShipmentFanoutExchange() {
 
     if (!orderFanoutExchange || !channel) {
         try {
-            channel = await connectToRabbitMQ();
             console.log(`Connecting to RabbitMQ exchange: ${exchangeName}...`)
             orderFanoutExchange = await channel.assertExchange(exchangeName, 'fanout', {
                 durable: true
@@ -71,7 +69,7 @@ async function connectToShipmentFanoutExchange() {
 }
 
 async function publishOrderStartedEvent(orderInformation) {
-    const { exchangeName, channel} = await connectToOrderDirectExchange();
+    const { exchangeName, channel } = await connectToOrderDirectExchange();
     try {
         channel.publish(exchangeName, 'order started', Buffer.from(JSON.stringify(orderInformation)));
         console.log('order_started event published successfully')
@@ -110,7 +108,7 @@ async function consumePaymentCaptured() {
 }
 
 async function publishOrderCompleted(message) {
-    const { exchangeName, channel} = await connectToOrderDirectExchange();
+    const { exchangeName, channel } = await connectToOrderDirectExchange();
     try {
         channel.publish(exchangeName, 'order completed', Buffer.from(JSON.stringify(message)));
         console.log('order_completed event published successfully');

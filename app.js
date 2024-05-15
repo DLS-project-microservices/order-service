@@ -17,7 +17,6 @@ app.use('/api/orders', routes);
 
 
 await consumePaymentCaptured();
-
 await consumeShipmentSent();
 
 
