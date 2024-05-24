@@ -4,7 +4,7 @@ import SmeeClient from 'smee-client';
 import "dotenv/config"
 import routes from './routes/routes.js';
 import webhooksRouter from "./routes/webhooksRoutes.js";
-import { consumePaymentCaptured, consumeShipmentSent } from "./messages/orders.js";
+import { consumePaymentCaptured, consumeShipmentSent, consumItemReservedFailed } from "./messages/orders.js";
 
 const smee = new SmeeClient({
     source: process.env.SMEE_SOURCE,
@@ -27,6 +27,7 @@ app.use('/api/orders', routes);
 
 await consumePaymentCaptured();
 await consumeShipmentSent();
+await consumItemReservedFailed();
 
 
 const PORT = process.env.PORT || 3003;
