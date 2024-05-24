@@ -7,7 +7,7 @@ const orderSchema = new mongoose.Schema({
     },
     orderStatus: {
         type: String,
-        enum: ['order_started', 'order_waiting', 'order_completed'], // Need to discuss this (sega pattern)
+        enum: ['order_started', 'order_waiting', 'order_completed', 'order_shipped', 'order_failed'], // Need to discuss this (sega pattern)
         required: true
     },
     orderNumber: {

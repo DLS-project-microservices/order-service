@@ -1,4 +1,5 @@
 import { connectToRabbitMQ } from "amqplib-retry-wrapper-dls";
+import {updateOrderStatusByOrderId} from '../service/order.js'
 
 let orderDirectExchange;
 let orderFanoutExchange;
@@ -94,7 +95,8 @@ async function consumePaymentCaptured() {
         try {
             if (msg?.content) {
                 const messageContent = JSON.parse(msg.content.toString());
-                    console.log(messageContent);
+                    console.log('the msg from consumePaymentCaptured: ',messageContent);
+                    await updateOrderStatusByOrderId(messageContent._id, 'order_completed');
                     await publishOrderCompleted(messageContent);
                     console.log('payment_captured event processed successfully');
                     
@@ -126,6 +128,7 @@ async function consumeShipmentSent() {
         await channel.assertQueue(queueName, {
         durable: true
         });
+
         channel.bindQueue(queueName, exchangeName, '');
 
         console.log('Waiting for shipment_sent events...');
@@ -133,6 +136,7 @@ async function consumeShipmentSent() {
         channel.consume(queueName, async (msg) => {
             if (msg?.content) {
                 const messageContent = JSON.parse(msg.content.toString());
+                await updateOrderStatusByOrderId(messageContent._id, 'order_shipped');
                 console.log(messageContent);
                 console.log('shipment_sent event processed successfully');
                 channel.ack(msg);
@@ -144,8 +148,61 @@ async function consumeShipmentSent() {
     }
 };
 
+async function consumItemReservedFailed(){
+    const queueName = 'order_service_consum_items_reserved_failed';
+    const routingKey = 'items reserved failed';
+
+
+    try{
+        const { exchangeName, channel } = await connectToOrderDirectExchange();
+
+        await channel.assertQueue(queueName, {
+            durable: true
+            });
+
+        channel.bindQueue(queueName, exchangeName, routingKey);
+        
+        await channel.consume(queueName, async (msg) => {
+            try{
+                if (msg !== null) {
+                    const messageContent = JSON.parse(msg.content.toString());
+                    await updateOrderStatusByOrderId(messageContent._id, 'order_failed');
+                    await publishOrderFailed(messageContent);
+                    console.log('items_reserved_failed consume successfully', messageContent);
+                    
+                    channel.ack(msg);
+                }
+
+            } catch(error){
+                console.error('Error processing items_reserved_failed:', error);
+            }
+        })
+
+
+    } catch(error){
+        console.error('Error consuming items_reserved_failed event:', error);
+
+    }
+
+    
+}
+
+async function publishOrderFailed(message){
+    const { exchangeName, channel } = await connectToOrderDirectExchange();
+    try {
+        channel.publish(exchangeName, 'order_failed', Buffer.from(JSON.stringify(message)));
+        console.log('order_failed event published successfully');
+    }
+    catch(error) {
+        console.error('Error publishing order_failed message', error);
+    }
+
+}
+
 export {
     consumePaymentCaptured,
     publishOrderStartedEvent,
-    consumeShipmentSent
+    consumeShipmentSent,
+    consumItemReservedFailed,
+    publishOrderFailed
 }
