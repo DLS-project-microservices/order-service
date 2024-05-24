@@ -95,7 +95,6 @@ async function consumePaymentCaptured() {
         try {
             if (msg?.content) {
                 const messageContent = JSON.parse(msg.content.toString());
-                    console.log('the msg from consumePaymentCaptured: ',messageContent);
                     await updateOrderStatusByOrderId(messageContent._id, 'order_completed');
                     await publishOrderCompleted(messageContent);
                     console.log('payment_captured event processed successfully');

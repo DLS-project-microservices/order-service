@@ -67,9 +67,10 @@ webhooksRouter.post('/checkout-session-completed-webhook', express.json(), async
                 city: sessionWithLineItems.metadata.city,
                 street: sessionWithLineItems.metadata.address,
                 postalCode: sessionWithLineItems.metadata.postalCode,
-            }
+            },
+            paymentIntent: event.data.object.payment_intent
           }
-          console.log('the new order is: ',newOrder)
+          console.log('the new order is: ', newOrder)
           await createOrder(newOrder);
         break;
  
