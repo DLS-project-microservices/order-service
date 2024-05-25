@@ -176,20 +176,16 @@ async function consumItemReservedFailed(){
                 console.error('Error processing items_reserved_failed:', error);
             }
         })
-
-
     } catch(error){
         console.error('Error consuming items_reserved_failed event:', error);
 
     }
-
-    
 }
 
 async function publishOrderFailed(message){
     const { exchangeName, channel } = await connectToOrderDirectExchange();
     try {
-        channel.publish(exchangeName, 'order_failed', Buffer.from(JSON.stringify(message)));
+        channel.publish(exchangeName, 'order failed', Buffer.from(JSON.stringify(message)));
         console.log('order_failed event published successfully');
     }
     catch(error) {
